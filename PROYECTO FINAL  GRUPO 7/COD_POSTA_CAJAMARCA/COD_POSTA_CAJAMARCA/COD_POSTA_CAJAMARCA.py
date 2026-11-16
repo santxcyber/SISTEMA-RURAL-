@@ -1,3 +1,10 @@
+import os
+
+
+def limpiar_pantalla():
+  os.system("cls" if os.name == "nt" else "clear")
+
+
 class Persona:
 
   def __init__(self, nombre, dni):
@@ -33,7 +40,6 @@ class Triaje:
     self.temperatura = temperatura
     self.saturacion_oxigeno = saturacion
     self.peso_kg = peso
-    # ARREGLO IMC: Si ingresan la talla en cm (ej. 170), se convierte automáticamente a metros (1.70)
     self.talla_m = talla / 100 if talla > 3 else talla
 
   def calcular_imc(self):
@@ -41,7 +47,6 @@ class Triaje:
       raise ValueError("La talla debe ser mayor a 0.")
     return self.peso_kg / (self.talla_m**2)
 
-  # NUEVO: Muestra todos los datos del triaje con sus símbolos y unidades
   def mostrar_datos(self):
     imc = self.calcular_imc()
     return (
@@ -55,7 +60,6 @@ class Triaje:
     )
 
 
-# Lista simple para guardar a los pacientes registrados
 pacientes = []
 
 
@@ -69,7 +73,8 @@ def validar_entrada(dato):
 
   if not dato.isdigit() or len(dato) != 8:
     raise ValueError(
-        "Debe ingresar un DNI de 8 números (sin letras) o un código válido (ej. HP-001)."
+        "Debe ingresar un DNI de 8 números (sin letras) o un código válido (ej."
+        " HP-001)."
     )
 
   return "DNI", dato
@@ -83,36 +88,60 @@ def buscar_paciente(dato_validado):
 
 
 while True:
-  print ("----------------------")
+  limpiar_pantalla()
+  print("----------------------")
   print("    MENÚ PRINCIPAL ")
   print("1. Registrar paciente")
   print("2. Buscar paciente")
   print("3. Ingresar triaje")
-  print("4. Salir")
-  print ("----------------------")
+  print("4. Mostrar registros ingresados")
+  print("5. Salir")
+  print("----------------------")
   opcion = input("Elige una opción: ")
 
+  limpiar_pantalla()
+
   if opcion == "1":
+    print("--- REGISTRAR PACIENTE ---")
     try:
-      nombre = input("Nombre: ")
-      _, dni = validar_entrada(input("DNI (8 dígitos): "))
-      codigo = input("Código Historia Posta (ej. HP-001): ").strip().upper()
+      nombre = input("Nombre: ").strip()
+      if not nombre:
+        raise ValueError("El nombre no puede estar vacío.")
+
+      tipo_dni, dni = validar_entrada(input("DNI (8 dígitos): "))
+      if tipo_dni != "DNI":
+        raise ValueError("En este campo debe ingresar un DNI de 8 dígitos.")
+
+      tipo_cod, codigo = validar_entrada(
+          input("Código Historia Posta (ej. HP-001): ")
+      )
+      if tipo_cod != "CODIGO":
+        raise ValueError(
+            "El código debe tener el formato HP- seguido de números (ej."
+            " HP-001)."
+        )
 
       if buscar_paciente(dni) is None and buscar_paciente(codigo) is None:
-        pacientes.append(Paciente(nombre, dni, codigo))
-        print("Paciente registrado.")
+        nuevo = Paciente(nombre, dni, codigo)
+        pacientes.append(nuevo)
+        print("\nPaciente registrado con éxito:")
+        print(
+            f"Código: {nuevo.codigo} | Paciente: {nuevo.nombre} | DNI:"
+            f" {nuevo.dni}"
+        )
       else:
         print("Ese DNI o Código ya existe.")
     except ValueError as e:
       print(f"Error: {e}")
 
   elif opcion == "2":
+    print("--- BUSCAR PACIENTE ---")
     try:
       _, dato = validar_entrada(input("DNI o Código Historia Posta a buscar: "))
       p = buscar_paciente(dato)
 
       if p is not None:
-        print(f"\nEncontrado: {p.nombre} | Código: {p.codigo}")
+        print(f"\nEncontrado: {p.nombre} | Código: {p.codigo} | DNI: {p.dni}")
         if p.triaje is not None:
           print("--- Datos de Triaje ---")
           print(p.triaje.mostrar_datos())
@@ -124,6 +153,7 @@ while True:
       print(f"Error: {e}")
 
   elif opcion == "3":
+    print("--- INGRESAR TRIAJE ---")
     try:
       tipo, dato = validar_entrada(
           input("DNI o Código Historia Posta para triaje: ")
@@ -136,12 +166,15 @@ while True:
           p = Paciente("Paciente Preliminar", dato, codigo_nuevo)
           pacientes.append(p)
           print(
-              f"Paciente nuevo. Se creó Historia Posta preliminar única: {p.codigo}"
+              "Paciente nuevo. Se creó Historia Posta preliminar única:"
+              f" {p.codigo}"
           )
         else:
           print(
-              "Código de historia no encontrado. Ingrese su DNI para crear una nueva."
+              "Código de historia no encontrado. Ingrese su DNI para crear una"
+              " nueva."
           )
+          input("\nPresiona Enter para volver al menú...")
           continue
       else:
         print(f"Historial recuperado: {p.nombre} | Código: {p.codigo}")
@@ -155,8 +188,11 @@ while True:
       peso = float(input("Peso (kg): "))
       talla = float(input("Talla (m o cm): "))
 
-      if peso <= 0 or talla <= 0:
-        raise ValueError("El peso y la talla deben ser mayores a 0.")
+      # Validación corregida: acepta tallas en metros (ej. 1.70) o cm (ej. 170) y pesos reales
+      if peso <= 0 or peso >= 500:
+        raise ValueError("El peso ingresado es inválido (debe estar entre 1 y 500 kg).")
+      if talla <= 0 or (talla > 3 and talla < 30) or talla >= 250:
+        raise ValueError("La talla ingresada es inválida (ingrese en metros ej. 1.70 o en cm ej. 170).")
 
       p.triaje = Triaje(sis, dia, fc, fr, temp, sat, peso, talla)
       print("\nTriaje guardado correctamente:")
@@ -166,7 +202,22 @@ while True:
       print(f"Error de validación: {e}")
 
   elif opcion == "4":
+    print("--- REGISTROS INGRESADOS ---")
+    if not pacientes:
+      print("Aún no hay pacientes registrados.")
+    else:
+      for i, p in enumerate(pacientes, start=1):
+        print(f"\n{i}. {p.nombre} | DNI: {p.dni} | Código: {p.codigo}")
+        if p.triaje is not None:
+          print(p.triaje.mostrar_datos())
+        else:
+          print("  • Triaje: Pendiente")
+        print("-" * 35)
+
+  elif opcion == "5":
     print("Saliendo...")
     break
   else:
     print("Opción incorrecta.")
+
+  input("\nPresiona Enter para continuar...")
