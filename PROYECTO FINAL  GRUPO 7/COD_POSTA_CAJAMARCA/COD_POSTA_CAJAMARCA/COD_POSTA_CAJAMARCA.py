@@ -5,16 +5,14 @@ def limpiar_pantalla():
   os.system("cls" if os.name == "nt" else "clear")
 
 
-# ==========================================
-# 1. CLASES BÁSICAS (Mismo estilo que ya tenían)
-# ==========================================
+
 class Persona:
 
   def __init__(self, nombre, dni):
     self.__nombre = nombre
     self.__dni = dni
 
-  # Métodos simples para acceder y proteger datos (Ley 29733)
+
   def get_dni(self):
     return self.__dni
 
@@ -91,9 +89,7 @@ class CitaMedica:
     self.doctor = doctor
 
 
-# ==========================================
-# 2. LISTAS Y FUNCIONES DE BÚSQUEDA
-# ==========================================
+
 pacientes = []
 citas = []
 doctor_turno = Doctor("Dr. Carlos Mendoza", "12345678", "Medicina General")
@@ -116,7 +112,7 @@ def validar_entrada(dato):
 
 
 def buscar_paciente(dato_validado):
-  # Usamos filter y lambda (Programación Funcional que pide el informe)
+  # Usamos filter y lambda 
   resultado = list(
       filter(
           lambda p: p.get_dni() == dato_validado
@@ -127,9 +123,7 @@ def buscar_paciente(dato_validado):
   return resultado[0] if resultado else None
 
 
-# ==========================================
-# 3. MENÚ PRINCIPAL
-# ==========================================
+
 while True:
   limpiar_pantalla()
   print("-----------------------------------------")
@@ -288,7 +282,7 @@ while True:
     turno_op = input("Ver turno (1. Mañana | 2. Tarde): ").strip()
     turno_buscado = "Tarde" if turno_op == "2" else "Mañana"
 
-    # Uso de filter + lambda (RF-04 del informe)
+    # Usamos de filter + lambda :)
     citas_turno = list(filter(lambda c: c.turno == turno_buscado, citas))
 
     if not citas_turno:
@@ -334,7 +328,7 @@ while True:
       print(f"• Obstetricia: {obstetricia} atenciones")
 
   elif opcion == "7":
-    # Guardado simple en archivo de texto al cerrar (RNF-01)
+    #////////
     with open("respaldo_posta.txt", "w", encoding="utf-8") as archivo:
       archivo.write("RESPALDO PUESTO DE SALUD PORCÓN BAJO\n")
       for p in pacientes:
