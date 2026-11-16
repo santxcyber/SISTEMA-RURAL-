@@ -5,11 +5,31 @@ def limpiar_pantalla():
   os.system("cls" if os.name == "nt" else "clear")
 
 
+# ==========================================
+# 1. CLASES BÁSICAS (Mismo estilo que ya tenían)
+# ==========================================
 class Persona:
 
   def __init__(self, nombre, dni):
-    self.nombre = nombre
-    self.dni = dni
+    self.__nombre = nombre
+    self.__dni = dni
+
+  # Métodos simples para acceder y proteger datos (Ley 29733)
+  def get_dni(self):
+    return self.__dni
+
+  def get_dni_oculto(self):
+    return "****" + self.__dni[4:]
+
+  def get_nombre(self):
+    return self.__nombre
+
+
+class Doctor(Persona):
+
+  def __init__(self, nombre, dni, especialidad):
+    super().__init__(nombre, dni)
+    self.especialidad = especialidad
 
 
 class Paciente(Persona):
@@ -18,6 +38,7 @@ class Paciente(Persona):
     super().__init__(nombre, dni)
     self.codigo = codigo
     self.triaje = None
+    self.programa_atencion = None
 
 
 class Triaje:
@@ -60,7 +81,22 @@ class Triaje:
     )
 
 
+class CitaMedica:
+
+  def __init__(self, id_cita, fecha, turno, paciente, doctor):
+    self.id_cita = id_cita
+    self.fecha = fecha
+    self.turno = turno  # "Mañana" o "Tarde"
+    self.paciente = paciente
+    self.doctor = doctor
+
+
+# ==========================================
+# 2. LISTAS Y FUNCIONES DE BÚSQUEDA
+# ==========================================
 pacientes = []
+citas = []
+doctor_turno = Doctor("Dr. Carlos Mendoza", "12345678", "Medicina General")
 
 
 def validar_entrada(dato):
@@ -73,30 +109,40 @@ def validar_entrada(dato):
 
   if not dato.isdigit() or len(dato) != 8:
     raise ValueError(
-        "Debe ingresar un DNI de 8 números (sin letras) o un código válido (ej."
-        " HP-001)."
+        "Debe ingresar un DNI de 8 números o un código válido (ej. HP-001)."
     )
 
   return "DNI", dato
 
 
 def buscar_paciente(dato_validado):
-  for p in pacientes:
-    if p.dni == dato_validado or p.codigo.upper() == dato_validado:
-      return p
-  return None
+  # Usamos filter y lambda (Programación Funcional que pide el informe)
+  resultado = list(
+      filter(
+          lambda p: p.get_dni() == dato_validado
+          or p.codigo.upper() == dato_validado,
+          pacientes,
+      )
+  )
+  return resultado[0] if resultado else None
 
 
+# ==========================================
+# 3. MENÚ PRINCIPAL
+# ==========================================
 while True:
   limpiar_pantalla()
-  print("----------------------")
-  print("    MENÚ PRINCIPAL ")
+  print("-----------------------------------------")
+  print("  SISTEMARURAL-PE | P.S. PORCÓN BAJO")
+  print("-----------------------------------------")
   print("1. Registrar paciente")
   print("2. Buscar paciente")
   print("3. Ingresar triaje")
-  print("4. Mostrar registros ingresados")
-  print("5. Salir")
-  print("----------------------")
+  print("4. Programar cita médica")
+  print("5. Ver agenda diaria (Mañana / Tarde)")
+  print("6. Mostrar registros y reporte estadístico HIS")
+  print("7. Salir y guardar respaldo")
+  print("-----------------------------------------")
   opcion = input("Elige una opción: ")
 
   limpiar_pantalla()
@@ -110,24 +156,21 @@ while True:
 
       tipo_dni, dni = validar_entrada(input("DNI (8 dígitos): "))
       if tipo_dni != "DNI":
-        raise ValueError("En este campo debe ingresar un DNI de 8 dígitos.")
+        raise ValueError("Debe ingresar un DNI de 8 dígitos.")
 
       tipo_cod, codigo = validar_entrada(
           input("Código Historia Posta (ej. HP-001): ")
       )
       if tipo_cod != "CODIGO":
-        raise ValueError(
-            "El código debe tener el formato HP- seguido de números (ej."
-            " HP-001)."
-        )
+        raise ValueError("El código debe tener el formato HP-001.")
 
       if buscar_paciente(dni) is None and buscar_paciente(codigo) is None:
         nuevo = Paciente(nombre, dni, codigo)
         pacientes.append(nuevo)
         print("\nPaciente registrado con éxito:")
         print(
-            f"Código: {nuevo.codigo} | Paciente: {nuevo.nombre} | DNI:"
-            f" {nuevo.dni}"
+            f"Código: {nuevo.codigo} | Paciente: {nuevo.get_nombre()} | DNI:"
+            f" {nuevo.get_dni_oculto()}"
         )
       else:
         print("Ese DNI o Código ya existe.")
@@ -141,7 +184,10 @@ while True:
       p = buscar_paciente(dato)
 
       if p is not None:
-        print(f"\nEncontrado: {p.nombre} | Código: {p.codigo} | DNI: {p.dni}")
+        print(
+            f"\nEncontrado: {p.get_nombre()} | Código: {p.codigo} | DNI:"
+            f" {p.get_dni_oculto()}"
+        )
         if p.triaje is not None:
           print("--- Datos de Triaje ---")
           print(p.triaje.mostrar_datos())
@@ -171,13 +217,13 @@ while True:
           )
         else:
           print(
-              "Código de historia no encontrado. Ingrese su DNI para crear una"
+              "Código no encontrado. Ingrese su DNI para crear una historia"
               " nueva."
           )
           input("\nPresiona Enter para volver al menú...")
           continue
       else:
-        print(f"Historial recuperado: {p.nombre} | Código: {p.codigo}")
+        print(f"Historial recuperado: {p.get_nombre()} | Código: {p.codigo}")
 
       sis = int(input("Presión sistólica (mmHg): "))
       dia = int(input("Presión diastólica (mmHg): "))
@@ -188,11 +234,25 @@ while True:
       peso = float(input("Peso (kg): "))
       talla = float(input("Talla (m o cm): "))
 
-      # Validación corregida: acepta tallas en metros (ej. 1.70) o cm (ej. 170) y pesos reales
+      # Validaciones simples de rangos fisiológicos (RF-02)
+      if temp < 34.0 or temp > 42.5:
+        raise ValueError("La temperatura debe estar entre 34.0 y 42.5 °C.")
+      if sat < 50 or sat > 100:
+        raise ValueError("La saturación debe estar entre 50% y 100%.")
       if peso <= 0 or peso >= 500:
-        raise ValueError("El peso ingresado es inválido (debe estar entre 1 y 500 kg).")
+        raise ValueError("El peso debe estar entre 1 y 500 kg.")
       if talla <= 0 or (talla > 3 and talla < 30) or talla >= 250:
-        raise ValueError("La talla ingresada es inválida (ingrese en metros ej. 1.70 o en cm ej. 170).")
+        raise ValueError("La talla ingresada es inválida.")
+
+      print("\nPrograma de atención:")
+      print("1. Medicina General | 2. Vacunas | 3. Obstetricia")
+      prog = input("Elige programa (1-3): ")
+      if prog == "2":
+        p.programa_atencion = "Vacunas"
+      elif prog == "3":
+        p.programa_atencion = "Obstetricia"
+      else:
+        p.programa_atencion = "Medicina General"
 
       p.triaje = Triaje(sis, dia, fc, fr, temp, sat, peso, talla)
       print("\nTriaje guardado correctamente:")
@@ -202,20 +262,86 @@ while True:
       print(f"Error de validación: {e}")
 
   elif opcion == "4":
-    print("--- REGISTROS INGRESADOS ---")
+    print("--- PROGRAMAR CITA MÉDICA ---")
+    try:
+      _, dato = validar_entrada(input("DNI o Código HP del paciente: "))
+      p = buscar_paciente(dato)
+      if p is None:
+        print("Paciente no encontrado. Regístrelo primero en la opción 1.")
+      else:
+        fecha = input("Fecha de la cita (ej. 18/11/2026): ").strip()
+        turno_op = input("Turno (1. Mañana | 2. Tarde): ").strip()
+        turno = "Tarde" if turno_op == "2" else "Mañana"
+
+        id_cita = f"CITA-{len(citas) + 1:03d}"
+        nueva_cita = CitaMedica(id_cita, fecha, turno, p, doctor_turno)
+        citas.append(nueva_cita)
+        print(
+            f"\nCita {id_cita} programada para {p.get_nombre()} en el turno"
+            f" {turno}."
+        )
+    except ValueError as e:
+      print(f"Error: {e}")
+
+  elif opcion == "5":
+    print("--- AGENDA DIARIA POR TURNO ---")
+    turno_op = input("Ver turno (1. Mañana | 2. Tarde): ").strip()
+    turno_buscado = "Tarde" if turno_op == "2" else "Mañana"
+
+    # Uso de filter + lambda (RF-04 del informe)
+    citas_turno = list(filter(lambda c: c.turno == turno_buscado, citas))
+
+    if not citas_turno:
+      print(f"No hay citas registradas en el turno {turno_buscado}.")
+    else:
+      for c in citas_turno:
+        print(
+            f"[{c.id_cita}] Fecha: {c.fecha} | Paciente:"
+            f" {c.paciente.get_nombre()} ({c.paciente.codigo}) | Doctor:"
+            f" {c.doctor.get_nombre()}"
+        )
+
+  elif opcion == "6":
+    print("--- REGISTROS Y CONSOLIDADO HIS (DIRESA) ---")
     if not pacientes:
       print("Aún no hay pacientes registrados.")
     else:
+      med_general = 0
+      vacunas = 0
+      obstetricia = 0
+
       for i, p in enumerate(pacientes, start=1):
-        print(f"\n{i}. {p.nombre} | DNI: {p.dni} | Código: {p.codigo}")
+        print(
+            f"\n{i}. {p.get_nombre()} | DNI: {p.get_dni_oculto()} | Código:"
+            f" {p.codigo}"
+        )
         if p.triaje is not None:
           print(p.triaje.mostrar_datos())
+          print(f"  • Programa: {p.programa_atencion}")
+          if p.programa_atencion == "Vacunas":
+            vacunas += 1
+          elif p.programa_atencion == "Obstetricia":
+            obstetricia += 1
+          else:
+            med_general += 1
         else:
           print("  • Triaje: Pendiente")
         print("-" * 35)
 
-  elif opcion == "5":
-    print("Saliendo...")
+      print("\n=== RESUMEN ESTADÍSTICO HIS (DIRESA CAJAMARCA) ===")
+      print(f"• Medicina General: {med_general} atenciones")
+      print(f"• Vacunas: {vacunas} atenciones")
+      print(f"• Obstetricia: {obstetricia} atenciones")
+
+  elif opcion == "7":
+    # Guardado simple en archivo de texto al cerrar (RNF-01)
+    with open("respaldo_posta.txt", "w", encoding="utf-8") as archivo:
+      archivo.write("RESPALDO PUESTO DE SALUD PORCÓN BAJO\n")
+      for p in pacientes:
+        archivo.write(
+            f"{p.codigo} | {p.get_nombre()} | DNI: {p.get_dni_oculto()}\n"
+        )
+    print("Respaldo guardado en 'respaldo_posta.txt'. Saliendo...")
     break
   else:
     print("Opción incorrecta.")
