@@ -158,6 +158,7 @@ while True:
           print("No hay pacientes registrados. Intente registrar pacientes.")
 
       for i in range(len(pacientes)):
+          print("-----------------------------------------")
           print(f"Paciente {i+1}:")
           print(f"Nombre: {pacientes[i].nombre}")
           print(f"DNI: {pacientes[i].dni}")
