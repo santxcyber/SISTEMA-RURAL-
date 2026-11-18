@@ -18,18 +18,17 @@ def buscar_paciente(dato):
 
 
 while True:
-  limpiar_pantalla()
   print("-----------------------------------------")
   print("  SISTEMARURAL-PE | P.S. PORCÓN BAJO")
   print("-----------------------------------------")
   print("1. Registrar paciente")
   print("2. Buscar paciente (DNI o Código)")
   print("3. Ingresar triaje")
-  print("4. Salir")
+  print("4. Ver pacientes registrados")
+  print("5. Salir")
   print("-----------------------------------------")
   opcion = input("Elige una opción: ")
 
-  limpiar_pantalla()
 
   if opcion == "1":
     print("--- REGISTRAR PACIENTE ---")
@@ -70,12 +69,12 @@ while True:
       print(f"DNI: {dni_oculto}")
       if p.triaje is not None:
         print("\n--- Datos de Triaje ---")
-        print(f"• Presión Arterial: {p.triaje['presion']} mmHg")
-        print(f"• Frecuencia Cardíaca: {p.triaje['fc']} lpm")
-        print(f"• Frecuencia Respiratoria: {p.triaje['fr']} rpm")
-        print(f"• Temperatura: {p.triaje['temp']} °C")
-        print(f"• Peso: {p.triaje['peso']} kg | Talla: {p.triaje['talla']} m")
-        print(f"• IMC: {p.triaje['imc']}")
+        print(f" Presión Arterial: {p.triaje['presion']} mmHg")
+        print(f" Frecuencia Cardíaca: {p.triaje['fc']} lpm")
+        print(f" Frecuencia Respiratoria: {p.triaje['fr']} rpm")
+        print(f" Temperatura: {p.triaje['temp']} °C")
+        print(f" Peso: {p.triaje['peso']} kg | Talla: {p.triaje['talla']} m")
+        print(f" IMC: {p.triaje['imc']}")
       else:
         print("\nAún no tiene triaje registrado.")
     else:
@@ -144,17 +143,38 @@ while True:
         }
 
         print("\n¡Triaje guardado correctamente!")
-        print(f"• IMC Calculado: {imc_redondeado}")
-        print(f"• Presión: {sistolica}/{diastolica} mmHg")
-        print(f"• Frecuencia Cardíaca: {fc} lpm")
-        print(f"• Frecuencia Respiratoria: {fr} rpm")
-        print(f"• Temperatura: {temp} °C")
-        print(f"• Peso: {peso} kg | Talla: {talla} m")
+        print(f" IMC Calculado: {imc_redondeado}")
+        print(f" Presión: {sistolica}/{diastolica} mmHg")
+        print(f" Frecuencia Cardíaca: {fc} lpm")
+        print(f" Frecuencia Respiratoria: {fr} rpm")
+        print(f" Temperatura: {temp} °C")
+        print(f" Peso: {peso} kg | Talla: {talla} m")
 
       except ValueError as e:
         print(f"Error de validación: {e}")
 
-  elif opcion == "4":
+  elif (opcion == "4"):
+      if len(pacientes) <= 0:
+          print("No hay pacientes registrados. Intente registrar pacientes.")
+
+      for i in range(len(pacientes)):
+          print(f"Paciente {i+1}:")
+          print(f"Nombre: {pacientes[i].nombre}")
+          print(f"DNI: {pacientes[i].dni}")
+          print(f"Código: {pacientes[i].codigo}")
+          if pacientes[i].triaje is not None:
+              print("Triaje registrado:")
+              print(f" Presión Arterial: {pacientes[i].triaje['presion']} mmHg")
+              print(f" Frecuencia Cardíaca: {pacientes[i].triaje['fc']} lpm")
+              print(f" Frecuencia Respiratoria: {pacientes[i].triaje['fr']} rpm")
+              print(f" Temperatura: {pacientes[i].triaje['temp']} °C")
+              print(f" Peso: {pacientes[i].triaje['peso']} kg | Talla: {pacientes[i].triaje['talla']} m")
+              print(f" IMC: {pacientes[i].triaje['imc']}")
+          else:
+              print("Aún no tiene triaje registrado.")
+          print("-----------------------------------------")
+
+  elif opcion == "5":
     print("Saliendo del sistema. ¡Hasta luego!")
     break
   else:
